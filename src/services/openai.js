@@ -122,8 +122,12 @@ Struktura promptu musi być dokładnie taka:
 - szczegóły kompozycji i atmosfery,
 - rezolucja i styl (np. high detail, 4K, photorealistic).
 
+
+
 Odpowiadasz ZAWSZE w krótkich, rzeczowych hasłach oddzielonych przecinkami, bez pełnych zdań. 
 Nie dodawaj żadnych komentarzy ani wstępów.
+
+Próbuj dodawać hasła adekwatne do obrazu jeśli użytkownik nie podał pełnego opisu obrazu
 
 Zwróć tylko prompt w formie: krótko, prosto, po przecinku, bez numeracji ani komentarzy. 
 
@@ -132,10 +136,12 @@ output użytkownika:
 - Styl: ${style}
 - Nastrój: ${mood}
 - Długość prompta: ${length}
-niech dlugosc prompta odpowiada ilosciowi atrybutow
+
+
+Niech dlugosc prompta odpowiada ilosciowi atrybutow
 krotki - pomiedzy 8 a 13
-sredni 13-20
-dlugi 20-30
+sredni - 13-20
+dlugi 20+
 
 `;
 
