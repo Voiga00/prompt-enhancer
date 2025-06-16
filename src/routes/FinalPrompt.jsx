@@ -1,35 +1,36 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
-import { optimizePrompt } from "../services/openai";
+import { optimizePrompt, generateImageFromPrompt } from "../services/openai";
 import { usePromptHistory } from "../hooks/usePromptHistory";
 
 export default function FinalPrompt() {
   const { apiKey, promptData } = useAppContext();
   const [finalPrompt, setFinalPrompt] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadingPrompt, setLoadingPrompt] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [imgUrl, setImgUrl] = useState("");
+  const [loadingImg, setLoadingImg] = useState(false);
+  const [errorImg, setErrorImg] = useState("");
   const { addPrompt } = usePromptHistory();
 
   useEffect(() => {
-    const generate = async () => {
+    const gen = async () => {
       if (!promptData || !promptData.prompt || !apiKey) {
         setFinalPrompt("❌ Brakuje danych do wygenerowania prompta.");
-        setLoading(false);
+        setLoadingPrompt(false);
         return;
       }
-
       try {
-        const optimized = await optimizePrompt(apiKey, promptData);
-        setFinalPrompt(optimized);
-      } catch (err) {
-        console.error("Błąd przy generowaniu prompta:", err);
-        setFinalPrompt("❌ Błąd podczas generowania prompta.");
+        const opt = await optimizePrompt(apiKey, promptData);
+        setFinalPrompt(opt);
+      } catch (e) {
+        console.error(e);
+        setFinalPrompt("❌ Błąd generując prompt");
       } finally {
-        setLoading(false);
+        setLoadingPrompt(false);
       }
     };
-
-    generate();
+    gen();
   }, [apiKey, promptData]);
 
   const handleSave = () => {
@@ -40,11 +41,25 @@ export default function FinalPrompt() {
     }
   };
 
+  const handleGenerate = async () => {
+    setErrorImg("");
+    setLoadingImg(true);
+    try {
+      const url = await generateImageFromPrompt(apiKey, finalPrompt);
+      setImgUrl(url);
+    } catch (e) {
+      console.error(e);
+      setErrorImg("❌ Błąd generowania obrazu.");
+    } finally {
+      setLoadingImg(false);
+    }
+  };
+
   return (
     <div>
       <h1>🧠 Finalny prompt</h1>
 
-      {loading ? (
+      {loadingPrompt ? (
         <p>⏳ Generowanie prompta...</p>
       ) : (
         <>
@@ -53,6 +68,21 @@ export default function FinalPrompt() {
             💾 Zapisz prompt
           </button>
           {saved && <p style={{ color: "limegreen", marginTop: "10px" }}>✔️ Zapisano!</p>}
+
+          <div style={{ marginTop: "30px" }}>
+            <button onClick={handleGenerate} style={styles.button} disabled={loadingImg || loadingPrompt}>
+              🖼️ Wygeneruj obrazek
+            </button>
+            {loadingImg && <p>⏳ Generowanie obrazka...</p>}
+            {errorImg && <p style={{ color: "crimson" }}>{errorImg}</p>}
+            {imgUrl && (
+              <img
+                src={imgUrl}
+                alt="Generated"
+                style={{ display: "block", marginTop: "20px", maxWidth: "100%", borderRadius: "8px" }}
+              />
+            )}
+          </div>
         </>
       )}
     </div>
@@ -69,7 +99,7 @@ const styles = {
     fontSize: "1rem",
   },
   button: {
-    marginTop: "20px",
+    marginTop: "12px",
     padding: "10px 20px",
     fontSize: "1rem",
     backgroundColor: "#444",

@@ -61,10 +61,6 @@ export const optimizePrompt = async (apiKey, promptData) => {
     prompt, style, mood, length, temperature, answers, showPreview
   } = promptData;
 
-  const langNote = showPreview
-    ? "Wygeneruj prompt po angielsku"
-    : "Wygeneruj prompt po polsku.";
-
   const messages = [
     {
       role: "system",
@@ -86,7 +82,6 @@ export const optimizePrompt = async (apiKey, promptData) => {
 Odpowiedzi użytkownika:
 ${answers.map((ans, i) => `Pytanie ${i + 1}: ${ans}`).join("\n")}
 
-${langNote}
 Nie dodawaj żadnych komentarzy – tylko gotowy prompt.
 `,
     },
@@ -143,9 +138,11 @@ krotki - pomiedzy 8 a 13
 sredni - 13-20
 dlugi 20+
 
+Wygeneruj dany prompt po angielsku.
+
 `;
 
- const userPrompt = `Proszę wygeneruj finalny prompt do obrazu zgodnie z powyższymi danymi.`;
+ const userPrompt = `Proszę wygeneruj finalny prompt do obrazu zgodnie z powyższymi danymi po angielsku.`;
 
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -172,4 +169,28 @@ dlugi 20+
 
   const data = await res.json();
   return data.choices[0].message.content.trim();
+};
+
+export const generateImageFromPrompt = async (apiKey, prompt) => {
+  const response = await fetch("https://api.openai.com/v1/images/generations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "dall-e-3",
+      prompt,
+      n: 1,
+      size: "1024x1024",
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`OpenAI Image Error: ${response.status} ${errText}`);
+  }
+
+  const data = await response.json();
+  return data.data[0].url;
 };

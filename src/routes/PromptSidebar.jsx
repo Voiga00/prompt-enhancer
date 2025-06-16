@@ -6,7 +6,7 @@ const PromptSidebar = ({ prompts, selectedIndex, onClear }) => {
 
   return (
     <div style={styles.sidebar}>
-      <Link to="/" style={styles.logo}>Prompt Enhancer</Link>
+      <Link to="/prompt-form" style={styles.logo}>Prompt Enhancer</Link>
       <div style={styles.historyHeader}>📜 Historia Promptów</div>
       <ul style={styles.historyList}>
         {prompts.length === 0 && <li style={{ color: "#888" }}>Brak historii</li>}

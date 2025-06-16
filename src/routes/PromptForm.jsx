@@ -202,15 +202,6 @@ export default function PromptForm() {
           />
         </div>
         <div>
-          <label>
-            <input
-              type="checkbox"
-              checked={showPreview}
-              onChange={(e) => setShowPreview(e.target.checked)}
-              style={{ marginRight: "6px" }}
-            />
-            Pokaż angielską wersję prompta
-          </label>
         </div>
         <button type="submit" disabled={loading}>
           {loading ? "Generowanie pytań..." : "Dalej"}

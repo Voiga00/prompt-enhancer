@@ -18,7 +18,7 @@ function Layout({ children, prompts, setSelectedIndex }) {
     <div style={styles.appLayout}>
       <PromptSidebar
         prompts={prompts}
-        selectedIndex={null}  // można później śledzić
+        selectedIndex={null} 
         onClear={clearHistory}
       />
       <main style={styles.mainContent}>{children}</main>
