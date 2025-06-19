@@ -56,94 +56,42 @@ Na tej podstawie wygeneruj ${count} krótkich, prostych i konkretynych pytań. B
   return questions.slice(0, count);
 };
 
-export const optimizePrompt = async (apiKey, promptData) => {
-  const {
-    prompt, style, mood, length, temperature, answers, showPreview
-  } = promptData;
-
-  const messages = [
-    {
-      role: "system",
-      content: `Jesteś ekspertem od prompt engineeringu do generowania obrazów.
-
-      Wypisz prompta w krótkich prostych hasłach
-      
-      Oto dane użytkownika:
-- Prompt: "${prompt}"
-- Styl: ${style}
-- Nastrój: ${mood}
-- Długość prompta: ${length}`,
-    },
-    {
-      role: "user",
-      content: `
 
 
-Odpowiedzi użytkownika:
-${answers.map((ans, i) => `Pytanie ${i + 1}: ${ans}`).join("\n")}
-
-Nie dodawaj żadnych komentarzy – tylko gotowy prompt.
-`,
-    },
-  ];
-
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4-turbo",
-      messages,
-      temperature,
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error("Błąd podczas optymalizacji prompta");
-  }
-
-  const data = await res.json();
-  return data.choices[0].message.content.trim();
-};
-
-export const generatePreviewPrompt = async (apiKey, { prompt, style, mood, length, temperature }) => {
+export const generatePreviewPrompt = async (
+  apiKey,
+  { prompt, style, mood, length, temperature, answers = [] }
+) => {
   const systemPrompt = `
-Jesteś ekspertem od prompt engineeringu do generowania obrazów.
+Jesteś kreatywnym ekspertem od prompt engineeringu do generowania obrazów.
 Struktura promptu musi być dokładnie taka: 
 - medium (np. digital art, oil painting),
 - główny temat obrazu (np. white cat lying on table),
 - szczegóły kompozycji i atmosfery,
 - rezolucja i styl (np. high detail, 4K, photorealistic).
 
-
-
 Odpowiadasz ZAWSZE w krótkich, rzeczowych hasłach oddzielonych przecinkami, bez pełnych zdań. 
 Nie dodawaj żadnych komentarzy ani wstępów.
-
-Próbuj dodawać hasła adekwatne do obrazu jeśli użytkownik nie podał pełnego opisu obrazu
-
+NIGDY nie ignoruj opisu użytkownika. 
+Jeśli użytkownik nie dodał szczegółów, dodaj hasła pasujące do prompta użytkownika.
 Zwróć tylko prompt w formie: krótko, prosto, po przecinku, bez numeracji ani komentarzy. 
+Prompt ma być ZAWSZE przetłumaczony na angielski.
 
-output użytkownika:
-- Prompt użytkownika: "${prompt}"
+Dane użytkownika:
+- Prompt: "${prompt}"
 - Styl: ${style}
 - Nastrój: ${mood}
-- Długość prompta: ${length}
+- Długość: ${length}
+- Odpowiedzi użytkownika:
+${answers.map((ans, i) => `Pytanie ${i + 1}: ${ans}`).join("\n")}
 
-
-Niech dlugosc prompta odpowiada ilosciowi atrybutow
-krotki - pomiedzy 8 a 13
-sredni - 13-20
-dlugi 20+
-
-Wygeneruj dany prompt po angielsku.
-
+Długość prompta:
+- krótki: 8–13 elementów
+- średni: 13–20 elementów
+- długi: 20+ elementów
 `;
 
- const userPrompt = `Proszę wygeneruj finalny prompt do obrazu zgodnie z powyższymi danymi po angielsku.`;
-
+  const userPrompt = `Wygeneruj finalny prompt do obrazu zgodnie z powyższymi danymi po angielsku.`;
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -162,14 +110,14 @@ Wygeneruj dany prompt po angielsku.
   });
 
   if (!res.ok) {
-  const errorDetails = await res.text();
-  throw new Error(`Błąd API OpenAI: ${res.status} ${res.statusText} - ${errorDetails}`);
-}
-
+    const errorDetails = await res.text();
+    throw new Error(`Błąd API OpenAI: ${res.status} ${res.statusText} - ${errorDetails}`);
+  }
 
   const data = await res.json();
   return data.choices[0].message.content.trim();
 };
+
 
 export const generateImageFromPrompt = async (apiKey, prompt) => {
   const response = await fetch("https://api.openai.com/v1/images/generations", {

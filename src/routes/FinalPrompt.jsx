@@ -1,37 +1,36 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
-import { optimizePrompt, generateImageFromPrompt } from "../services/openai";
+import { generatePreviewPrompt, generateImageFromPrompt } from "../services/openai";
 import { usePromptHistory } from "../hooks/usePromptHistory";
 
 export default function FinalPrompt() {
   const { apiKey, promptData } = useAppContext();
+  const { prompt, style, mood, length, temperature, medium, composition, answers } = promptData;
   const [finalPrompt, setFinalPrompt] = useState("");
   const [loadingPrompt, setLoadingPrompt] = useState(true);
   const [saved, setSaved] = useState(false);
-  const [imgUrl, setImgUrl] = useState("");
-  const [loadingImg, setLoadingImg] = useState(false);
-  const [errorImg, setErrorImg] = useState("");
   const { addPrompt } = usePromptHistory();
 
   useEffect(() => {
-    const gen = async () => {
-      if (!promptData || !promptData.prompt || !apiKey) {
-        setFinalPrompt("❌ Brakuje danych do wygenerowania prompta.");
+    const generate = async () => {
+      if (!prompt || !apiKey || !answers?.length) {
+        setFinalPrompt("❌ Brakuje danych lub brak odpowiedzi na pytania.");
         setLoadingPrompt(false);
         return;
       }
       try {
-        const opt = await optimizePrompt(apiKey, promptData);
-        setFinalPrompt(opt);
-      } catch (e) {
-        console.error(e);
-        setFinalPrompt("❌ Błąd generując prompt");
+        const output = await generatePreviewPrompt(apiKey, { prompt, style, mood, length, temperature, medium, composition, answers });
+        setFinalPrompt(output);
+      } catch (err) {
+        console.error(err);
+        setFinalPrompt("❌ Błąd podczas generowania prompta.");
       } finally {
         setLoadingPrompt(false);
       }
     };
-    gen();
-  }, [apiKey, promptData]);
+
+    generate();
+  }, [apiKey, prompt, style, mood, length, temperature, medium, composition, answers]);
 
   const handleSave = () => {
     if (finalPrompt.trim()) {
@@ -41,14 +40,18 @@ export default function FinalPrompt() {
     }
   };
 
+  const [imgUrl, setImgUrl] = useState("");
+  const [loadingImg, setLoadingImg] = useState(false);
+  const [errorImg, setErrorImg] = useState("");
+
   const handleGenerate = async () => {
     setErrorImg("");
     setLoadingImg(true);
     try {
       const url = await generateImageFromPrompt(apiKey, finalPrompt);
       setImgUrl(url);
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
       setErrorImg("❌ Błąd generowania obrazu.");
     } finally {
       setLoadingImg(false);
@@ -64,24 +67,14 @@ export default function FinalPrompt() {
       ) : (
         <>
           <pre style={styles.output}>{finalPrompt}</pre>
-          <button onClick={handleSave} style={styles.button}>
-            💾 Zapisz prompt
-          </button>
+          <button onClick={handleSave} style={styles.button}>💾 Zapisz prompt</button>
           {saved && <p style={{ color: "limegreen", marginTop: "10px" }}>✔️ Zapisano!</p>}
 
-          <div style={{ marginTop: "30px" }}>
-            <button onClick={handleGenerate} style={styles.button} disabled={loadingImg || loadingPrompt}>
-              🖼️ Wygeneruj obrazek
-            </button>
-            {loadingImg && <p>⏳ Generowanie obrazka...</p>}
+          <div style={{ marginTop: "20px" }}>
+            <button onClick={handleGenerate} style={styles.button} disabled={loadingImg}>🖼️ Wygeneruj obrazek</button>
+            {loadingImg && <p>⏳ Generowanie obrazu...</p>}
             {errorImg && <p style={{ color: "crimson" }}>{errorImg}</p>}
-            {imgUrl && (
-              <img
-                src={imgUrl}
-                alt="Generated"
-                style={{ display: "block", marginTop: "20px", maxWidth: "100%", borderRadius: "8px" }}
-              />
-            )}
+            {imgUrl && <img src={imgUrl} alt="Generated" style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "15px" }} />}
           </div>
         </>
       )}
